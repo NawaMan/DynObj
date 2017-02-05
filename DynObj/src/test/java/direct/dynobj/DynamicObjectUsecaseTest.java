@@ -1,6 +1,7 @@
 package direct.dynobj;
 
 import static direct.dynobj.DynamicObjectUsecaseTest.Data.data;
+import static direct.dynobj.FieldsHolder.*;
 import static java.util.Collections.singletonMap;
 
 import java.util.Arrays;
@@ -37,6 +38,18 @@ public class DynamicObjectUsecaseTest {
                     .map(data)
                     .collect(Collectors.joining(","));
         Assert.assertEquals("row1,row3,row4", result);
+    }
+    
+    public static interface DataBean {
+        
+        public String getData();
+        
+    }
+    
+    @Test
+    public void testJavaBean() {
+        DataBean dataBean = DynamicObject.of(javaBean(fromMap(singletonMap("data", "row1"))), DataBean.class);
+        Assert.assertEquals("row1", dataBean.getData());
     }
     
 }

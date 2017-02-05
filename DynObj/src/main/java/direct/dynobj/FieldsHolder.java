@@ -53,4 +53,20 @@ public interface FieldsHolder {
         };
     }
     
+    /**
+     * Wrap the holder with the one that relate the field name with the JavaBean name.
+     * 
+     * @param orgHolder  the original holder.
+     * @return  the wrapped holder.
+     **/
+    public static FieldsHolder javaBean(FieldsHolder orgHolder) {
+        return name->{
+            String fieldName = name.replaceAll("^(is|get)", "");
+            fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
+            
+            Optional<Object> returnedValue = orgHolder.get(fieldName);
+            return returnedValue;
+        };
+    }
+    
 }
