@@ -73,9 +73,7 @@ public class DynmicObjectCreator {
 
             String fieldName = method.getName();
             Optional<Object> returned = get(getters, method, fieldName);
-            handleMissingField(method, returned, fieldName);
-            
-            Object rawValue = returned.orElse(null);
+            Object rawValue = handleMissingField(proxy, method, returned, fieldName);
             Object retValue = handlePrimitiveReturnType(method, rawValue);
             return retValue;
         };
@@ -117,13 +115,19 @@ public class DynmicObjectCreator {
         }
     }
     
-    private void handleMissingField(Method method, Optional<Object> returned, String fieldName) {
+    private Object handleMissingField(Object proxy, Method method, Optional<Object> returned, String fieldName)
+            throws IllegalAccessException, Throwable {
         if (returned != null) {
-            return;
+            return returned.orElse(null);
         }
-        
+
         Class<?> declaringClass = method.getDeclaringClass();
-        throw new MissingFieldException(fieldName, declaringClass);
+        if (method.isDefault()) {
+            Object defaultReturnValue = runDefaultImplementation(proxy, method, new Object[0], declaringClass);
+            return defaultReturnValue;
+        } else {
+            throw new MissingFieldException(fieldName, declaringClass);
+        }
     }
     
     private Object handlePrimitiveReturnType(Method method, Object value) {

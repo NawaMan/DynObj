@@ -116,9 +116,16 @@ public class DynamicObjectSpecificationTest {
     
     @Test
     public void testNotGetter() {
-        FieldsHolder     getters = name -> Optional.ofNullable(name);
-        _NormalInterface    theDynObj = DynamicObject.of(getters, _NormalInterface.class);
+        FieldsHolder     getters   = name -> Optional.ofNullable(name);
+        _NormalInterface theDynObj = DynamicObject.of(getters, _NormalInterface.class);
         Assert.assertEquals(5, theDynObj.lengthOfValue());
+    }
+    
+    @Test
+    public void testDefaultImplementation() {
+        FieldsHolder               getters   = name -> null;
+        _WithDefaultValueInterface theDynObj = DynamicObject.of(getters, _WithDefaultValueInterface.class);
+        Assert.assertEquals("whatever", theDynObj.value());
     }
     
 }
