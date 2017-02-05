@@ -107,4 +107,18 @@ public class DynamicObjectSpecificationTest {
         Assert.assertEquals(42, antDynObj.getInt());
     }
     
+    @Test
+    public void testMethodWithParameter() {
+        FieldsHolder     getters   = name -> Optional.ofNullable(name);
+        _NormalInterface theDynObj = DynamicObject.of(getters, _NormalInterface.class);
+        Assert.assertEquals("value is the value", theDynObj.concate(" is the value"));
+    }
+    
+    @Test
+    public void testNotGetter() {
+        FieldsHolder     getters = name -> Optional.ofNullable(name);
+        _NormalInterface    theDynObj = DynamicObject.of(getters, _NormalInterface.class);
+        Assert.assertEquals(5, theDynObj.lengthOfValue());
+    }
+    
 }

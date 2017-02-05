@@ -1,5 +1,7 @@
 package direct.dynobj;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -62,6 +64,13 @@ public class DynmicObjectCreator {
     
     private InvocationHandler createInvocationHandler(FieldsHolder getters) {
         InvocationHandler invocationHandler = (Object proxy, Method method, Object[] args) -> {
+            if (method.getParameterTypes().length != 0) {
+                return handleNonGetterMethod(proxy, method, args);
+            }
+            if (method.isAnnotationPresent(NonGetter.class)) {
+                return handleNonGetterMethod(proxy, method, args);
+            }
+
             String fieldName = method.getName();
             Optional<Object> returned = get(getters, method, fieldName);
             handleMissingField(method, returned, fieldName);
@@ -71,6 +80,31 @@ public class DynmicObjectCreator {
             return retValue;
         };
         return invocationHandler;
+    }
+
+    private Object handleNonGetterMethod(Object proxy, Method method, Object[] args) 
+            throws Throwable, IllegalAccessException {
+        String fieldName = method.getName();
+        Class<?> declaringClass = method.getDeclaringClass();
+        if (method.isDefault()) {
+            Object defaultReturnValue = runDefaultImplementation(proxy, method, args, declaringClass);
+            return defaultReturnValue;
+        } else {
+            throw new MethodNotFieldGetterException(fieldName, declaringClass);
+        }
+    }
+
+    private Object runDefaultImplementation(Object proxy, Method method, Object[] args, Class<?> declaringClass)
+            throws Throwable, IllegalAccessException {
+        final Constructor<MethodHandles.Lookup> constructor
+                = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
+        if (!constructor.isAccessible()) {
+            constructor.setAccessible(true);
+        }
+        return constructor.newInstance(declaringClass, MethodHandles.Lookup.PRIVATE)
+                .unreflectSpecial(method, declaringClass)
+                .bindTo(proxy)
+                .invokeWithArguments(args);
     }
     
     private Optional<Object> get(FieldsHolder getters, Method method, String fieldName) {
