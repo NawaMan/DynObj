@@ -32,7 +32,7 @@ public class DynamicObjectUsecaseTest {
         
         String result =
                 rows.stream()
-                    .map(row->DynamicObject.of(FieldsHolder.fromMap(row), Data.class))
+                    .map(row->DynamicObject.fromMap(row, Data.class))
                     .filter(data.notEqualsTo("row2"))
                     .map(data)
                     .collect(Collectors.joining(","));
