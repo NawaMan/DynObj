@@ -135,4 +135,14 @@ public class DynamicObjectSpecificationTest {
         Assert.assertSame(getters, theDynObj._originalFieldHolder());
     }
     
+    @Test
+    public void testWithInterfaces() {
+        FieldsHolder     getters   = name -> Optional.ofNullable(name);
+        _NormalInterface theDynObj = DynamicObject.of(getters, _NormalInterface.class, WithInterfaces.class);
+        Assert.assertEquals(
+                "[interface direct.dynobj._NormalInterface, interface direct.dynobj.DynamicObject, "
+                + "interface direct.dynobj.WithInterfaces]", 
+                ((WithInterfaces)theDynObj)._interfaces().toString());
+    }
+    
 }

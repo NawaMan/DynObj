@@ -5,10 +5,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Creator for a dynamic object.
@@ -27,7 +27,17 @@ public class DynmicObjectCreator {
             System.exit(0);
         }
     }
-    
+
+    private static Method interfacesMethod;
+    static {
+        try {
+            Method mth = WithInterfaces.class.getMethod("_interfaces", new Class[0]);
+            interfacesMethod = mth;
+        } catch (NoSuchMethodException | SecurityException e) {
+            e.printStackTrace();
+            System.exit(0);
+        }
+    }
     /**
      * Create the object.
      * 
@@ -41,22 +51,24 @@ public class DynmicObjectCreator {
             Class<?>...  moreInterface) {
         checkPrecondition(fieldHolder, mainInterface, moreInterface);
         
-        Class<?>[] interfaces  = prepareInterfaces(mainInterface, moreInterface);
-        boolean    isWithOrgFH = false;
-        for (int i = 0; i < interfaces.length; i++) {
-            Class<?> intf = interfaces[i];
-            if (WithOriginalFieldsHolder.class.isAssignableFrom(intf)) {
-                isWithOrgFH = true;
-            }
-        }
-        
-        InvocationHandler invocationHandler = createInvocationHandler(fieldHolder, isWithOrgFH);
+        Class<?>[]        interfaces       = prepareInterfaces(mainInterface, moreInterface);
+        InvocationHandler invocationHandler = createInvocationHandler(fieldHolder, interfaces);
         ClassLoader       classLoader       = mainInterface.getClassLoader();
         
         @SuppressWarnings("unchecked")
         T dynObj = (T) Proxy.newProxyInstance(classLoader, interfaces, invocationHandler);
         
         return dynObj;
+    }
+
+    private boolean checkIfImplement(Class<?>[] interfaces, Class<?> clzz) {
+        for (int i = 0; i < interfaces.length; i++) {
+            Class<?> intf = interfaces[i];
+            if (clzz.isAssignableFrom(intf)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private <T> void checkPrecondition(FieldsHolder getters, Class<T> inf, Class<?>... infs) {
@@ -82,7 +94,7 @@ public class DynmicObjectCreator {
         return interfaces;
     }
     
-    private InvocationHandler createInvocationHandler(FieldsHolder getters, boolean isWithOrgFH) {
+    private InvocationHandler createInvocationHandler(FieldsHolder getters, Class<?>[] interfaces) {
         InvocationHandler invocationHandler = (Object proxy, Method method, Object[] args) -> {
             if (method.getParameterTypes().length != 0) {
                 return handleNonGetterMethod(proxy, method, args);
@@ -90,11 +102,21 @@ public class DynmicObjectCreator {
             if (method.isAnnotationPresent(NonGetter.class)) {
                 return handleNonGetterMethod(proxy, method, args);
             }
+            
+
+            boolean isWithOrgFH = checkIfImplement(interfaces, WithOriginalFieldsHolder.class);
             if (isWithOrgFH
              && method.getName().equals(orgFieldsHolderMethod.getName())
              && orgFieldsHolderMethod.getDeclaringClass().isAssignableFrom(method.getDeclaringClass())
              && method.getReturnType().equals(FieldsHolder.class)) {
                 return getters;
+            }
+            boolean isWithInfs  = checkIfImplement(interfaces, WithInterfaces.class);
+            if (isWithInfs
+             && method.getName().equals(interfacesMethod.getName())
+             && interfacesMethod.getDeclaringClass().isAssignableFrom(method.getDeclaringClass())
+             && method.getReturnType().equals(Collection.class)) {
+                return Arrays.asList(interfaces);
             }
 
             String fieldName = method.getName();
