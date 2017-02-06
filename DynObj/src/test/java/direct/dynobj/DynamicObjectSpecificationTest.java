@@ -128,4 +128,11 @@ public class DynamicObjectSpecificationTest {
         Assert.assertEquals("whatever", theDynObj.value());
     }
     
+    @Test
+    public void testWithOriginalFieldsHolder() {
+        FieldsHolder             getters   = name -> Optional.ofNullable(name);
+        WithOriginalFieldsHolder theDynObj = DynamicObject.of(getters, WithOriginalFieldsHolder.class);
+        Assert.assertSame(getters, theDynObj._originalFieldHolder());
+    }
+    
 }
