@@ -15,5 +15,4 @@
 hs_err_pid*
 
 */build/**
-*/.gradle/*/taskArtifacts
-
+*/.gradle
