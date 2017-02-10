@@ -17,6 +17,8 @@ import java.util.Optional;
  **/
 public class DynmicObjectCreator {
     
+    // TODO - Think about an ability to freeze the value (validate them before freezing).
+    
     private static Method orgFieldsHolderMethod;
     static {
         try {
@@ -51,6 +53,7 @@ public class DynmicObjectCreator {
             Class<?>...  moreInterface) {
         checkPrecondition(fieldHolder, mainInterface, moreInterface);
         
+        // TODO - May be we should ensure that these are all interface
         Class<?>[]        interfaces       = prepareInterfaces(mainInterface, moreInterface);
         InvocationHandler invocationHandler = createInvocationHandler(fieldHolder, interfaces);
         ClassLoader       classLoader       = mainInterface.getClassLoader();
@@ -96,6 +99,7 @@ public class DynmicObjectCreator {
     
     private InvocationHandler createInvocationHandler(FieldsHolder getters, Class<?>[] interfaces) {
         InvocationHandler invocationHandler = (Object proxy, Method method, Object[] args) -> {
+            // Should we allow function here?
             if (method.getParameterTypes().length != 0) {
                 return handleNonGetterMethod(proxy, method, args);
             }
